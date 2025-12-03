@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"time"
 
+	"github.com/chromedp/cdproto/cdp"
+	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"github.com/joho/godotenv"
 )
@@ -14,31 +17,80 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		panic("No .env file found")
 	}
-	msgr_acct := os.Getenv("MESSENGER_ACCT")
-	msgr_pass := os.Getenv("MESSENGER_PASS")
-	// opts := append(
-	// 	chromedp.DefaultExecAllocatorOptions[:],
-	// 	chromedp.Flag("no-sandbox", true),
-	// 	chromedp.Flag("headless", true),
-	// )
-	// allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
-	// defer cancel()
+	cUser := os.Getenv("C_USER")
+	datr := os.Getenv("DATR")
+	locale := os.Getenv("LOCALE")
+	psL := os.Getenv("PS_L")
+	psN := os.Getenv("PS_N")
+	sb := os.Getenv("SB")
+	wd := os.Getenv("WD")
+	xs := os.Getenv("XS")
+	cookies := []string{"c_user", cUser, "datr", datr, "locale", locale, "ps_l", psL, "ps_n", psN, "sb", sb, "wd", wd, "xs", xs}
+	host := "https://www.messenger.com/"
+	parsedURL, err := url.Parse(host)
+	if err != nil {
+		panic("invalid host URL")
+	}
+	domain := parsedURL.Hostname()
 
 	ctx, cancle := chromedp.NewContext(context.Background())
 	defer cancle()
 
-	var htmlContent string
-	err := chromedp.Run(ctx,
-		chromedp.Navigate("https://www.messenger.com/"),
-		chromedp.Sleep(2*time.Second),
-		chromedp.SendKeys("#email", msgr_acct),
-		chromedp.SendKeys("#pass", msgr_pass),
-		chromedp.Click("#loginbutton"),
-		chromedp.Sleep(2*time.Second),
-		chromedp.OuterHTML("html", &htmlContent),
+	var ccmc string
+	var perpetual string
+	err = chromedp.Run(
+		ctx,
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			expr := cdp.TimeSinceEpoch(time.Now().Add(180 * 24 * time.Hour))
+			for i := 0; i < len(cookies); i += 2 {
+				err := network.SetCookie(cookies[i], cookies[i+1]).
+					WithExpires(&expr).
+					WithDomain(domain).
+					WithPath("/").
+					WithHTTPOnly(false).
+					WithSecure(false).
+					Do(ctx)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		}),
+		chromedp.Navigate(host),
+		chromedp.WaitVisible("span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6", chromedp.ByQuery),
+		//
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			cookies, err := network.GetCookies().Do(ctx)
+			if err != nil {
+				return err
+			}
+			for _, cookie := range cookies {
+				expr := cdp.TimeSinceEpoch(time.Unix(int64(cookie.Expires), 0))
+				err := network.SetCookie(cookie.Name, cookie.Value).
+					WithExpires(&expr).
+					WithDomain(domain).
+					WithPath("/").
+					WithHTTPOnly(false).
+					WithSecure(false).
+					Do(ctx)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		}),
+		chromedp.Navigate("https://www.messenger.com/t/7808053889217350"),
+		chromedp.WaitVisible("", chromedp.ByQuery),
+		chromedp.OuterHTML("html", &perpetual, chromedp.ByQuery),
+		chromedp.Navigate("https://www.messenger.com/t/6843762519014249"),
+		chromedp.WaitVisible("", chromedp.ByQuery),
+		chromedp.OuterHTML("html", &perpetual, chromedp.ByQuery),
 	)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(htmlContent)
+	fmt.Println("CCMC:")
+	fmt.Println(ccmc)
+	fmt.Println("Perpetual:")
+	fmt.Println(perpetual)
 }
