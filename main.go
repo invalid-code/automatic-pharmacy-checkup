@@ -37,7 +37,7 @@ func main() {
 	defer cancle()
 
 	var ccmc string
-	var perpetual string
+	// var perpetual string
 	err = chromedp.Run(
 		ctx,
 		chromedp.ActionFunc(func(ctx context.Context) error {
@@ -56,41 +56,15 @@ func main() {
 			}
 			return nil
 		}),
-		chromedp.Navigate(host),
-		chromedp.WaitVisible("span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6", chromedp.ByQuery),
-		//
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			cookies, err := network.GetCookies().Do(ctx)
-			if err != nil {
-				return err
-			}
-			for _, cookie := range cookies {
-				expr := cdp.TimeSinceEpoch(time.Unix(int64(cookie.Expires), 0))
-				err := network.SetCookie(cookie.Name, cookie.Value).
-					WithExpires(&expr).
-					WithDomain(domain).
-					WithPath("/").
-					WithHTTPOnly(false).
-					WithSecure(false).
-					Do(ctx)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		}),
-		chromedp.Navigate("https://www.messenger.com/t/7808053889217350"),
-		chromedp.WaitVisible("", chromedp.ByQuery),
-		chromedp.OuterHTML("html", &perpetual, chromedp.ByQuery),
+		// chromedp.Navigate("https://www.messenger.com/t/7808053889217350"),
+		// chromedp.WaitVisible("span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6", chromedp.ByQuery),
+		// chromedp.OuterHTML("html", &perpetual, chromedp.ByQuery),
 		chromedp.Navigate("https://www.messenger.com/t/6843762519014249"),
-		chromedp.WaitVisible("", chromedp.ByQuery),
-		chromedp.OuterHTML("html", &perpetual, chromedp.ByQuery),
+		chromedp.WaitVisible("span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6", chromedp.ByQuery),
+		chromedp.OuterHTML("html", &ccmc, chromedp.ByQuery),
 	)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("CCMC:")
 	fmt.Println(ccmc)
-	fmt.Println("Perpetual:")
-	fmt.Println(perpetual)
 }
