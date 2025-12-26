@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	// "fmt"
+	"fmt"
 	"net/url"
 	"os"
 
@@ -21,6 +21,10 @@ func sendCheckupMessage(domain string, opts []chromedp.ExecAllocatorOption, cook
 	allocatorCtx, cancelAllocator := chromedp.NewExecAllocator(context.Background(), opts...)
 	defer cancelAllocator()
 
+	// chromedpCtx, cancelChromedpCtx := chromedp.NewContext(allocatorCtx)
+	// defer cancelChromedpCtx()
+
+	// taskCtx, cancelTask := context.WithTimeout(chromedpCtx, time.Hour/2)
 	taskCtx, cancelTask := chromedp.NewContext(allocatorCtx)
 	defer cancelTask()
 
@@ -49,7 +53,7 @@ func sendCheckupMessage(domain string, opts []chromedp.ExecAllocatorOption, cook
 		// chromedp.SendKeys("div[aria-label=\"Message\"]", msg+kb.Enter),
 
 		// chromedp.Navigate("https://www.messenger.com/t/6843762519014249"),
-		chromedp.Navigate("https://www.messenger.com/e2ee/t/9514674638608261"),
+		chromedp.Navigate("https://www.messenger.com/t/888200397021574/"),
 		chromedp.WaitVisible("span.x1lliihq.x1plvlek.xryxfnj.x1n2onr6", chromedp.ByQuery),
 		chromedp.Click("div[aria-label=\"Close\"][role=\"button\"]"),
 		chromedp.Click("div[aria-label=\"Don't restore messages\"][role=\"button\"][tabindex=\"0\"]"),
@@ -61,20 +65,13 @@ func sendCheckupMessage(domain string, opts []chromedp.ExecAllocatorOption, cook
 				return msgCond.innerText === "Sent";
 			})()`, nil, chromedp.WithPollingInterval(1*time.Second)),
 		chromedp.Sleep(3*time.Second),
-		chromedp.Poll(`
-			(function() {
-				const messages = document.querySelectorAll("div.html-div.xexx8yu.xyri2b.x18d9i69.x1c1uobl.x1gslohp.x14z9mp.x12nagc.x1lziwak.x1yc453h.x126k92a.xyk4ms5");
-				const messagesArr = [...messages];
-				const lastMessage = messagesArr.at(-1);
-				const lastMessageCont = lastMessage.innerText;
-				return /[0-9]+/.test(lastMessageCont);
-			})()`, nil, chromedp.WithPollingInterval(5*time.Second)),
+		chromedp.WaitVisible("div.html-div.xdj266r.xat24cr.xexx8yu.xyri2b.x18d9i9.x1c1uobl.x6s0dn4.xmg6eyc.xa4qsjk.xwnhzmj.x4hg4is.x1iuwi03.xr9e8f9.x1e4oeot.x1ui4y5.x6en5u8.78zum5.xqu0tyb.xm2jcoa.x1mpyi22.x51ohtg.x1xwhvez", chromedp.ByQuery),
 	)
 	if err != nil {
 		panic(err)
 	}
 
-	// fmt.Scanln()
+	fmt.Scanln()
 
 	// var wg sync.WaitGroup
 	// wg.Add(2)
